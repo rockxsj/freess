@@ -1,0 +1,118 @@
+{
+    "log": {
+        "access": "C:\\Users\\rockxsj\\AppData\\Local\\Temp\\_access.log",
+        "error": "C:\\Users\\rockxsj\\AppData\\Local\\Temp\\_error.log",
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": 1090,
+            "protocol": "socks",
+            "sniffing": {
+                "enabled": true,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ]
+            },
+            "settings": {
+                "auth": "noauth"
+            }
+        },
+        {
+            "port": 1091,
+            "protocol": "http",
+            "sniffing": {
+                "enabled": true,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ]
+            },
+            "settings": {
+                "auth": "noauth"
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "tag": "v2ray",
+            "mux": {
+                "enabled": true
+            },
+            "protocol": "vmess",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "www.kernels.bid",
+                        "port": 443,
+                        "users": [
+                            {
+                                "alterId": 0,
+                                "id": "39573582-0ca3-5f84-eae1-219132599f53"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "tls",
+                "tlsSettings": {
+                    "serverName": "www.kernels.bid"
+                },
+                "wsSettings": {
+                    "path": "/ws"
+                }
+            }
+        },
+        {
+            "protocol": "shadowsocks",
+            "tag": "proxy",
+            "settings": {
+                "servers": [
+                    {
+                        "address": "13.231.170.111",
+                        "port": 26119,
+                        "password": "E3nbTDcxCHP3",
+                        "method": "aes-256-cfb"
+                    }
+                ]
+            }
+        },
+        {
+            "protocol": "freedom",
+            "tag": "direct",
+            "settings": {}
+        },
+        {
+            "protocol": "blackhole",
+            "settings": {},
+            "tag": "adblock"
+        }
+    ],
+    "routing": {
+        "domainStrategy": "IPOnDemand",
+        "rules": [
+            {
+                "type": "field",
+                "outboundTag": "adblock",
+                "domain": [
+                    "geosite:category-ads-all"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "proxy",
+                "domain": [
+                    "geosite:geolocation-!cn"
+                ]
+            },
+            {
+                "type": "field",
+                "network": "tcp,udp",
+                "outboundTag": "direct"
+            }
+        ]
+    }
+}
