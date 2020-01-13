@@ -1,0 +1,14 @@
+{
+    "name": "freess",
+    "description": "自动爬取free-ss.site最新代理服务器并设置到本地v2ray且完成重启服务",
+    "version": "v0.0.1",
+    "author": {
+        "name": "rockxsj",
+        "email": "rockxsj@gmail.com"
+    },
+    "dependencies": {
+        "puppeteer-core": "^2.0.0",
+        "puppeteer-extra": "^3.1.9",
+        "puppeteer-extra-plugin-stealth": "^2.4.9"
+    }
+}
