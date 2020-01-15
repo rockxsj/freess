@@ -9,7 +9,7 @@ puppeteer.use(require('puppeteer-extra-plugin-stealth')())
 const v2rayPath = 'C:\\Users\\rockxsj\\scoop\\apps\\v2ray\\current'
 const chromeExe = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
 
-async function getLastShadowSocks() {
+async function getLastShadowSocks(currentConfig) {
     const browser = await puppeteer.launch({
         executablePath: chromeExe,
         headless: true,
@@ -34,15 +34,30 @@ async function getLastShadowSocks() {
         }
         const address = await trs[i].$eval('td:nth-child(2)', node => node.innerText)
         const port = await trs[i].$eval('td:nth-child(3)', node => node.innerText)
-        const password = await trs[i].$eval('td:nth-child(4)', node => node.innerText)
-        const method = await trs[i].$eval('td:nth-child(5)', node => node.innerText)
+        const method = await trs[i].$eval('td:nth-child(4)', node => node.innerText)
+        const password = await trs[i].$eval('td:nth-child(5)', node => node.innerText)
         ret = {
             address, port: parseInt(port), password, method
+        }
+        if (currentConfig.address === ret.address && currentConfig.port === ret.port) {
+            continue
         }
         break
     }
     await browser.close()
     return ret
+}
+
+function getCurrentConfig() {
+    const config = JSON.parse(fs.readFileSync(`${v2rayPath}\\config.json`))
+    let server
+    config.outbounds.forEach(each => {
+        if (each.protocol !== 'shadowsocks') {
+            return
+        }
+        server = each.settings.servers[0]
+    })
+    return server
 }
 
 function updateConfig(server) {
@@ -74,6 +89,11 @@ function restartV2ray() {
             }
         })
     })
+    const configTest = cp.execSync(`${v2rayPath}\\${v2ray} -test`)
+    if (configTest.indexOf('Configuration OK.') === -1) {
+        console.error('验证配置失效，配置为：', getCurrentConfig())
+        process.exit(1)
+    }
     cp.spawn(`${v2rayPath}\\${v2ray}`, {
         detached: true
     })
@@ -81,7 +101,8 @@ function restartV2ray() {
 }
 
 (async () => {
-    const server = await getLastShadowSocks()
+    const currentConfig = getCurrentConfig()
+    const server = await getLastShadowSocks(currentConfig)
     updateConfig(server)
     restartV2ray()
 })()
