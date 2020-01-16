@@ -25,16 +25,17 @@ async function getLastShadowSocks(currentConfig) {
     const trs = await page.$$('#tbss > tbody > tr')
     const okCountry = ['SG', 'JP', 'HK']
     const okQuality = '10↑/10↑/10↑/10↑'
+    const okMethod = 'aes-256-cfb'
     let ret
     for (let i = 0; i < trs.length; i++) {
         const quality = await trs[i].$eval('td:nth-child(1)', node => node.innerText)
         const country = await trs[i].$eval('td:nth-child(7)', node => node.innerText)
-        if (quality !== okQuality || !okCountry.includes(country)) {
+        const method = await trs[i].$eval('td:nth-child(4)', node => node.innerText)
+        if (quality !== okQuality || !okCountry.includes(country) || method !== okMethod) {
             continue
         }
         const address = await trs[i].$eval('td:nth-child(2)', node => node.innerText)
         const port = await trs[i].$eval('td:nth-child(3)', node => node.innerText)
-        const method = await trs[i].$eval('td:nth-child(4)', node => node.innerText)
         const password = await trs[i].$eval('td:nth-child(5)', node => node.innerText)
         ret = {
             address, port: parseInt(port), password, method
@@ -74,20 +75,17 @@ function updateConfig(server) {
 function restartV2ray() {
     const cmd = process.platform === 'win32' ? 'tasklist' : 'ps aux'
     const v2ray = process.platform === 'win32' ? 'v2ray.exe' : 'v2ray'
-    cp.exec(cmd, function (err, stdout, stderr) {
-        if (err) {
-            return console.log(err)
-        }
-        stdout.split('\n').filter(function (line) {
-            const p = line.trim().split(/\s+/), pname = p[0], pid = p[1]
-            if (pname.toLowerCase().indexOf(v2ray) >= 0 && parseInt(pid)) {
-                try {
-                    process.kill(pid)
-                } catch (error) {
-                    console.log('kill进程出错：', error)
-                }
+    const taskList = cp.execSync(cmd)
+    taskList.toString().split('\n').filter(function (line) {
+        const p = line.trim().split(/\s+/), pname = p[0], pid = p[1]
+        if (pname.toLowerCase().indexOf(v2ray) >= 0 && parseInt(pid)) {
+            console.info('之前v2ray进程pid：', pid)
+            try {
+                process.kill(pid)
+            } catch (error) {
+                console.log('kill进程出错：', error)
             }
-        })
+        }
     })
     const configTest = cp.execSync(`${v2rayPath}\\${v2ray} -test`)
     if (configTest.indexOf('Configuration OK.') === -1) {
