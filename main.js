@@ -41,6 +41,9 @@ async function getLastShadowSocks(currentConfig) {
         ret = {
             address, port: parseInt(port), password, method
         }
+        if (!currentConfig) {
+            break
+        }
         if (currentConfig.address === ret.address && currentConfig.port === ret.port) {
             continue
         }
