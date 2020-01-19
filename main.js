@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer-extra')
 const process = require('process')
 const cp = require('child_process')
 const fs = require('fs')
+const path = require('path')
 
 puppeteer.use(require('puppeteer-extra-plugin-stealth')())
 
@@ -50,7 +51,7 @@ async function getLastShadowSocks(currentConfig) {
 }
 
 function getCurrentConfig() {
-    const config = JSON.parse(fs.readFileSync(`${v2rayPath}\\config.json`))
+    const config = JSON.parse(fs.readFileSync(path.join(v2rayPath, "config.json")))
     let server
     config.outbounds.forEach(each => {
         if (each.protocol !== 'shadowsocks') {
@@ -62,19 +63,19 @@ function getCurrentConfig() {
 }
 
 function updateConfig(server) {
-    const config = JSON.parse(fs.readFileSync(`${v2rayPath}\\config.json`))
+    const config = JSON.parse(fs.readFileSync(path.join(v2rayPath, "config.json")))
     config.outbounds.forEach(each => {
         if (each.protocol !== 'shadowsocks') {
             return
         }
         each.settings.servers[0] = server
     })
-    fs.writeFileSync(`${v2rayPath}\\config.json`, JSON.stringify(config))
+    fs.writeFileSync(path.join(v2rayPath, "config.json"), JSON.stringify(config))
 }
 
 function restartV2ray() {
-    const cmd = process.platform === 'win32' ? 'tasklist' : 'ps aux'
     const v2ray = process.platform === 'win32' ? 'v2ray.exe' : 'v2ray'
+    const cmd = process.platform === 'win32' ? 'tasklist' : `ps aux | grep ${v2ray}`
     const taskList = cp.execSync(cmd)
     taskList.toString().split('\n').filter(function (line) {
         const p = line.trim().split(/\s+/), pname = p[0], pid = p[1]
@@ -87,15 +88,17 @@ function restartV2ray() {
             }
         }
     })
-    const configTest = cp.execSync(`${v2rayPath}\\${v2ray} -test`)
+    const configTest = cp.execSync(path.join(v2rayPath, v2ray) + ' -test')
     if (configTest.indexOf('Configuration OK.') === -1) {
         console.error('验证配置失效，配置为：', getCurrentConfig())
         process.exit(1)
     }
-    cp.spawn(`${v2rayPath}\\${v2ray}`, {
+    cp.spawn(path.join(v2rayPath, v2ray), {
         detached: true
     })
-    process.exit(0)
+    setTimeout(() => {
+        process.exit(0)
+    }, 200)
 }
 
 (async () => {
