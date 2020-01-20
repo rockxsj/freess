@@ -24,7 +24,7 @@ async function getLastShadowSocks(currentConfig) {
     await page.goto('https://free-ss.site/')
     await page.waitForSelector('#tbss_wrapper')
     const trs = await page.$$('#tbss > tbody > tr')
-    const okCountry = ['SG', 'JP', 'HK']
+    const okCountry = ['SG', 'JP', 'HK', 'RU', 'TW']
     const okQuality = '10↑/10↑/10↑/10↑'
     const okMethod = 'aes-256-cfb'
     let ret
@@ -66,6 +66,10 @@ function getCurrentConfig() {
 }
 
 function updateConfig(server) {
+    if (!server) {
+        console.warn('没有抓取到符合条件的服务器')
+        return
+    }
     const config = JSON.parse(fs.readFileSync(path.join(v2rayPath, "config.json")))
     config.outbounds.forEach(each => {
         if (each.protocol !== 'shadowsocks') {
