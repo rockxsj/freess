@@ -23,21 +23,27 @@ async function getLastShadowSocks(currentConfig) {
     const page = await browser.newPage()
     await page.goto('https://free-ss.site/')
     await page.waitForSelector('#tbss_wrapper')
+    const ths = await page.$$('#tbss > thead > tr > th')
+    const propertyIndex = {}
+    for (let i = 0; i < ths.length; i++) {
+        const text = await page.evaluate(el => el.innerHTML, ths[i]);
+        propertyIndex[text] = i + 1
+    }
     const trs = await page.$$('#tbss > tbody > tr')
     const okCountry = ['SG', 'JP', 'HK', 'RU', 'TW']
     const okQuality = '10↑/10↑/10↑/10↑'
     const okMethod = 'aes-256-cfb'
     let ret
     for (let i = 0; i < trs.length; i++) {
-        const quality = await trs[i].$eval('td:nth-child(1)', node => node.innerText)
-        const country = await trs[i].$eval('td:nth-child(7)', node => node.innerText)
-        const method = await trs[i].$eval('td:nth-child(4)', node => node.innerText)
+        const quality = await trs[i].$eval(`td:nth-child(${propertyIndex['V/T/U/M']})`, node => node.innerText)
+        const country = await trs[i].$eval(`td:nth-child(${propertyIndex['<i class="fa fa-globe" aria-hidden="true"></i>']})`, node => node.innerText)
+        const method = await trs[i].$eval(`td:nth-child(${propertyIndex['Method']})`, node => node.innerText)
         if (quality !== okQuality || !okCountry.includes(country) || method !== okMethod) {
             continue
         }
-        const address = await trs[i].$eval('td:nth-child(2)', node => node.innerText)
-        const port = await trs[i].$eval('td:nth-child(3)', node => node.innerText)
-        const password = await trs[i].$eval('td:nth-child(5)', node => node.innerText)
+        const address = await trs[i].$eval(`td:nth-child(${propertyIndex['Address']})`, node => node.innerText)
+        const port = await trs[i].$eval(`td:nth-child(${propertyIndex['Port']})`, node => node.innerText)
+        const password = await trs[i].$eval(`td:nth-child(${propertyIndex['Password']})`, node => node.innerText)
         ret = {
             address, port: parseInt(port), password, method
         }
